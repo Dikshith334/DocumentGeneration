@@ -1,0 +1,48 @@
+@model GeneratedPageViewModel
+@{
+    ViewData["Title"] = "Generated manual";
+    var result = Model.Result;
+    var manual = result.Manual;
+}
+
+@if (!result.Succeeded || manual is null)
+{
+    <section class="state-panel state-error">
+        <span class="state-icon">!</span>
+        <h1>Manual generation could not finish</h1>
+        <p>@result.ErrorMessage</p>
+        @foreach (var warning in result.Warnings) { <div class="alert alert-warning">@warning</div> }
+        <a asp-action="Index" class="btn btn-primary">Start a new generation</a>
+    </section>
+}
+else
+{
+    <div class="page-heading generated-heading">
+        <div><span class="eyebrow">MANUAL READY</span><h1>@manual.Title</h1><p>Preview the source-grounded manual or download a production-ready format.</p></div>
+        <div class="download-actions">
+            <a asp-action="Download" asp-route-jobId="@result.JobId" asp-route-fileName="@result.MarkdownFileName" class="btn btn-outline-primary">Markdown</a>
+            <a asp-action="Download" asp-route-jobId="@result.JobId" asp-route-fileName="@result.WordFileName" class="btn btn-outline-primary">Word</a>
+            <a asp-action="Download" asp-route-jobId="@result.JobId" asp-route-fileName="@result.PdfFileName" class="btn btn-primary">PDF</a>
+        </div>
+    </div>
+    @foreach (var warning in result.Warnings) { <div class="alert alert-warning">@warning</div> }
+    <article class="manual-preview">
+        <header><h1>@manual.Title</h1><p>Generated @manual.GeneratedDate.ToLocalTime().ToString("dd MMMM yyyy")</p></header>
+        @if (!string.IsNullOrWhiteSpace(manual.Overview)) { <section><h2>Overview</h2><p>@manual.Overview</p></section> }
+        @if (!string.IsNullOrWhiteSpace(manual.Navigation)) { <section><h2>Navigation</h2><p>@manual.Navigation</p></section> }
+        @if (!string.IsNullOrWhiteSpace(manual.ScreenOverview)) { <section><h2>Screen overview</h2><p>@manual.ScreenOverview</p></section> }
+        @if (manual.Prerequisites.Count > 0) { <section><h2>Prerequisites</h2><ul>@foreach (var item in manual.Prerequisites) { <li>@item</li> }</ul></section> }
+        @if (manual.Buttons.Count > 0) {
+            <section><h2>Feature index</h2><div class="table-responsive"><table class="table manual-table"><thead><tr><th>No.</th><th>Feature</th><th>Description</th></tr></thead><tbody>@for (var index = 0; index < manual.Buttons.Count; index++) { <tr><td>@(index + 1)</td><td>@manual.Buttons[index].Name</td><td>@manual.Buttons[index].Purpose</td></tr> }</tbody></table></div></section>
+            @for (var index = 0; index < manual.Buttons.Count; index++) { var button = manual.Buttons[index]; <section><h2>@(index + 1). @button.Name</h2><p>@button.Purpose</p>@if (button.HowToUse.Count > 0) { <h3>How to use</h3><ol>@foreach (var step in button.HowToUse) { <li>@step</li> }</ol> }@if (!string.IsNullOrWhiteSpace(button.ExpectedResult)) { <h3>Expected result</h3><p>@button.ExpectedResult</p> }@if (button.Conditions.Count > 0) { <h3>Conditions</h3><ul>@foreach (var item in button.Conditions) { <li>@item</li> }</ul> }</section> }
+        }
+        @if (manual.Fields.Count > 0) { <section><h2>Fields</h2><div class="table-responsive"><table class="table manual-table"><thead><tr><th>Field</th><th>Purpose</th><th>Type</th><th>Required</th></tr></thead><tbody>@foreach (var field in manual.Fields) { <tr><td>@field.Name</td><td>@field.Purpose</td><td>@field.Type</td><td>@(field.Required ? "Yes" : "No")</td></tr> }</tbody></table></div></section> }
+        @foreach (var table in manual.Tables) { <section><h2>@table.Name</h2><p>@table.Purpose</p>@if (table.Columns.Count > 0) { <table class="table manual-table"><thead><tr><th>Column</th><th>Description</th></tr></thead><tbody>@foreach (var column in table.Columns) { <tr><td>@column.Name</td><td>@column.Description</td></tr> }</tbody></table> }</section> }
+        @foreach (var group in new[] { (Title: "Filters", Items: manual.Filters), (Title: "Tabs", Items: manual.Tabs), (Title: "Common procedures", Items: manual.Procedures) }) { @if (group.Items.Count > 0) { <section><h2>@group.Title</h2>@foreach (var item in group.Items) { <h3>@item.Heading</h3><p>@item.Summary</p>@if (item.Steps.Count > 0) { <ol>@foreach (var step in item.Steps) { <li>@step</li> }</ol> } }</section> } }
+        @if (manual.BestPractices.Count > 0) { <section><h2>Best practices</h2><ul>@foreach (var item in manual.BestPractices) { <li>@item</li> }</ul></section> }
+        @if (manual.Troubleshooting.Count > 0) { <section><h2>Troubleshooting</h2><table class="table manual-table"><thead><tr><th>Problem</th><th>Possible cause</th><th>Solution</th></tr></thead><tbody>@foreach (var item in manual.Troubleshooting) { <tr><td>@item.Problem</td><td>@item.PossibleCause</td><td>@item.Solution</td></tr> }</tbody></table></section> }
+        @if (manual.Notes.Count > 0) { <section><h2>Notes</h2><ul>@foreach (var item in manual.Notes) { <li>@item</li> }</ul></section> }
+        @if (manual.ChangeSummary.Count > 0) { <section><h2>Documentation change summary</h2><ul>@foreach (var item in manual.ChangeSummary) { <li>@item</li> }</ul></section> }
+    </article>
+    <div class="text-center mt-4"><a asp-action="Index" class="btn btn-outline-secondary">Start new generation</a></div>
+}

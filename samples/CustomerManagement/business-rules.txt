@@ -1,0 +1,5 @@
+Delete is available only to Admin users.
+Export downloads the currently filtered customer records as an Excel file.
+Import accepts .xlsx files with a maximum size of 10 MB.
+Search supports partial customer names and email addresses.
+Inactive customers cannot be edited.

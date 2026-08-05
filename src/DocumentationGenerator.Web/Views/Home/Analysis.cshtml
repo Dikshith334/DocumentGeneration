@@ -1,0 +1,88 @@
+@model AnalysisPageViewModel
+@{
+    ViewData["Title"] = "Analysis";
+    var screen = Model.Result.Screen;
+    var changes = Model.Result.Changes;
+}
+
+<div class="page-heading">
+    <div><span class="eyebrow">ANALYSIS COMPLETE</span><h1>@screen.Name</h1><p>@screen.ElementCount UI elements extracted from <strong>@screen.SourceFileName</strong>.</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Start over</a>
+</div>
+
+@foreach (var warning in Model.Result.Warnings)
+{
+    <div class="alert alert-warning">@warning</div>
+}
+
+<div class="summary-grid mb-4">
+    <div><strong>@screen.Buttons.Count</strong><span>Buttons</span></div>
+    <div><strong>@screen.InputFields.Count</strong><span>Fields</span></div>
+    <div><strong>@screen.Filters.Count</strong><span>Filters</span></div>
+    <div><strong>@screen.Tables.Sum(table => table.Headers.Count)</strong><span>Table columns</span></div>
+    <div><strong>@changes.AddedElements.Count</strong><span>Added</span></div>
+    <div><strong>@changes.PossiblyRemovedElements.Count</strong><span>Review</span></div>
+</div>
+
+<div class="accordion analysis-accordion mb-4" id="analysisAccordion">
+    <div class="accordion-item">
+        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#uiElements">Extracted UI elements</button></h2>
+        <div id="uiElements" class="accordion-collapse collapse show"><div class="accordion-body">
+            <h3>Buttons</h3>
+            @if (screen.Buttons.Count == 0) { <p class="empty-copy">No buttons detected.</p> }
+            else {
+                <div class="table-responsive"><table class="table data-table"><thead><tr><th>Name</th><th>Click handler</th><th>Visibility</th><th>Tooltip / icon</th></tr></thead><tbody>
+                @foreach (var item in screen.Buttons) { <tr><td><strong>@item.DisplayName</strong></td><td><code>@item.AngularClickHandler</code></td><td><code>@item.VisibilityCondition</code></td><td>@string.Join(" · ", new[] { item.Tooltip, item.Icon }.Where(value => !string.IsNullOrWhiteSpace(value)))</td></tr> }
+                </tbody></table></div>
+            }
+            <h3>Fields and dropdowns</h3>
+            @if (screen.InputFields.Count + screen.Dropdowns.Count == 0) { <p class="empty-copy">No fields detected.</p> }
+            else {
+                <div class="table-responsive"><table class="table data-table"><thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Binding</th></tr></thead><tbody>
+                @foreach (var item in screen.InputFields) { <tr><td><strong>@item.DisplayName</strong></td><td>@item.InputType</td><td>@(item.Required ? "Yes" : "No")</td><td><code>@item.AngularModelBinding</code></td></tr> }
+                @foreach (var item in screen.Dropdowns) { <tr><td><strong>@item.DisplayName</strong></td><td>Dropdown</td><td>@(item.Required ? "Yes" : "No")</td><td><code>@item.AngularModelBinding</code></td></tr> }
+                </tbody></table></div>
+            }
+            <h3>Tables</h3>
+            @foreach (var table in screen.Tables) {
+                <div class="evidence-block"><strong>@table.Name</strong><p>@string.Join(" · ", table.Headers)</p><small>Pagination: @(string.IsNullOrWhiteSpace(table.PaginationInformation) ? "Not detected" : table.PaginationInformation)</small></div>
+            }
+            <h3>Filters and tabs</h3>
+            <div class="tag-list">
+                @foreach (var filter in screen.Filters) { <span class="tag">Filter · @filter.Label</span> }
+                @foreach (var tab in screen.Tabs) { <span class="tag">Tab · @tab.Title</span> }
+                @if (screen.Filters.Count + screen.Tabs.Count == 0) { <span class="empty-copy">None detected.</span> }
+            </div>
+        </div></div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#changes">Documentation changes</button></h2>
+        <div id="changes" class="accordion-collapse collapse"><div class="accordion-body">
+            <p>@changes.Summary</p>
+            <div class="change-columns">
+                <section><h3 class="text-success">Added / undocumented</h3>@foreach (var item in changes.AddedElements) { <div class="change-item"><span>@item.Category</span><strong>@item.Name</strong></div> } @if (changes.AddedElements.Count == 0) { <p class="empty-copy">None.</p> }</section>
+                <section><h3 class="text-primary">Existing</h3>@foreach (var item in changes.ExistingElements) { <div class="change-item"><span>@item.Category</span><strong>@item.Name</strong></div> } @if (changes.ExistingElements.Count == 0) { <p class="empty-copy">None.</p> }</section>
+                <section><h3 class="text-warning">Requires review</h3>@foreach (var item in changes.PossiblyChangedElements.Concat(changes.PossiblyRemovedElements)) { <div class="change-item"><span>@item.Category</span><strong>@item.Name</strong>@if (!string.IsNullOrWhiteSpace(item.PossibleMatch)) { <small>Possible match: @item.PossibleMatch</small> }</div> } @if (changes.PossiblyChangedElements.Count + changes.PossiblyRemovedElements.Count == 0) { <p class="empty-copy">None.</p> }</section>
+            </div>
+        </div></div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#supporting">Supporting evidence</button></h2>
+        <div id="supporting" class="accordion-collapse collapse"><div class="accordion-body">
+            <h3>Existing manual</h3>
+            @if (Model.Result.ExistingManual is null) { <p class="empty-copy">No readable Word manual supplied.</p> }
+            else { <p>@string.Join(" ", Model.Result.ExistingManual.DetectedStyleObservations)</p><div class="tag-list">@foreach (var heading in Model.Result.ExistingManual.Headings.Take(12)) { <span class="tag">@heading</span> }</div> }
+            <h3>Screenshot observations</h3>
+            @if (screen.ScreenshotObservations.Count == 0) { <p class="empty-copy">No screenshot observations available.</p> }
+            else { <ul>@foreach (var observation in screen.ScreenshotObservations) { <li>@observation</li> }</ul> }
+            <h3>Business rules</h3>
+            <pre class="business-rules">@(string.IsNullOrWhiteSpace(screen.BusinessRules) ? "No explicit business rules supplied." : screen.BusinessRules)</pre>
+        </div></div>
+    </div>
+</div>
+
+<form asp-action="Generate" method="post" class="generation-bar" data-loading-form data-loading-message="Generating the manual and exporting three formats…">
+    <input type="hidden" name="jobId" value="@Model.Result.JobId" />
+    <div><label asp-for="TextModel" class="form-label">Ollama text model</label><select asp-for="TextModel" asp-items="Model.Models" name="textModel" class="form-select"><option value="">Choose an installed model</option></select><small>@Model.OllamaMessage</small></div>
+    <button type="submit" class="btn btn-primary btn-lg">Generate user manual <span aria-hidden="true">→</span></button>
+</form>

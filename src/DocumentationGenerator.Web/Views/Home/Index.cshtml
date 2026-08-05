@@ -1,0 +1,94 @@
+@model NewGenerationViewModel
+@{
+    ViewData["Title"] = "New manual";
+}
+
+<section class="hero-panel mb-4">
+    <div class="hero-copy">
+        <span class="eyebrow">LOCAL AI · SOURCE-GROUNDED</span>
+        <h1>Turn an application screen into a professional user manual.</h1>
+        <p>Analyze static Angular or HTML, compare an existing Word manual, use optional visual evidence, and export a polished Markdown, Word, and PDF document.</p>
+    </div>
+    <div class="workflow-strip" aria-label="Workflow">
+        <span><b>1</b> Upload</span><i></i><span><b>2</b> Review</span><i></i><span><b>3</b> Generate</span>
+    </div>
+</section>
+
+<div class="alert @(Model.OllamaAvailable ? "alert-success" : "alert-warning") d-flex gap-2 align-items-start" role="status">
+    <span class="status-dot"></span>
+    <div><strong>Ollama status</strong><br /><span>@Model.OllamaMessage</span></div>
+</div>
+
+<form asp-action="Analyze" method="post" enctype="multipart/form-data" class="card form-card" data-loading-form data-loading-message="Analyzing the screen and comparing documentation…">
+    <div class="card-body p-4 p-lg-5">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="section-heading">
+            <span>01</span>
+            <div><h2>Screen source</h2><p>The HTML is parsed as text and never executed.</p></div>
+        </div>
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <label asp-for="ScreenName" class="form-label"></label>
+                <input asp-for="ScreenName" class="form-control form-control-lg" placeholder="Customer Management" />
+                <span asp-validation-for="ScreenName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HtmlFile" class="form-label"></label>
+                <input asp-for="HtmlFile" class="form-control form-control-lg" accept=".html,.htm,text/html" />
+                <div class="form-text">Required · .html or .htm</div>
+                <span asp-validation-for="HtmlFile" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="section-heading">
+            <span>02</span>
+            <div><h2>Supporting evidence</h2><p>Optional sources improve change detection and visible layout context.</p></div>
+        </div>
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <label asp-for="ExistingManual" class="form-label"></label>
+                <input asp-for="ExistingManual" class="form-control" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <div class="form-text">Optional · .docx</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Screenshot" class="form-label"></label>
+                <input asp-for="Screenshot" class="form-control" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
+                <div class="form-text">Optional · PNG, JPEG, or WebP</div>
+            </div>
+            <div class="col-12">
+                <label asp-for="BusinessRules" class="form-label"></label>
+                <textarea asp-for="BusinessRules" class="form-control rule-editor" rows="6" placeholder="Delete is available only to Admin users.&#10;Export downloads the currently filtered records as an Excel file."></textarea>
+                <div class="form-text">These statements override HTML inference and screenshot observations.</div>
+            </div>
+        </div>
+
+        <div class="section-heading">
+            <span>03</span>
+            <div><h2>Local AI models</h2><p>Installed models are read from your local Ollama instance.</p></div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label asp-for="TextModel" class="form-label"></label>
+                <select asp-for="TextModel" asp-items="Model.Models" class="form-select">
+                    <option value="">Select during generation</option>
+                </select>
+                <div class="form-text">Used after you review the analysis.</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="VisionModel" class="form-label"></label>
+                <select asp-for="VisionModel" asp-items="Model.Models" class="form-select">
+                    <option value="">Skip screenshot analysis</option>
+                </select>
+                <div class="form-text">Required only to analyze a supplied screenshot.</div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer action-footer">
+        <span>Your inputs remain in the local job workspace.</span>
+        <button type="submit" class="btn btn-primary btn-lg px-4">Analyze screen <span aria-hidden="true">→</span></button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

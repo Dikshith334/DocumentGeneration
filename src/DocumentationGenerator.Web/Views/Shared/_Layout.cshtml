@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Manual Studio</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="app-header">
+        <nav class="navbar navbar-expand-sm navbar-dark">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">M</span>
+                    <span>Manual Studio</span>
+                </a>
+                <span class="navbar-text d-none d-md-inline">Local AI documentation workspace</span>
+            </div>
+        </nav>
+    </header>
+    <main role="main" class="container py-4 py-lg-5">
+        @RenderBody()
+    </main>
+    <footer class="app-footer">
+        <div class="container d-flex justify-content-between flex-wrap gap-2">
+            <span>AI-Powered User Manual Generator</span>
+            <span>Files stay local and are sent only to your configured Ollama endpoint.</span>
+        </div>
+    </footer>
+    <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-hidden="true">
+        <div class="loading-card">
+            <div class="spinner-border text-primary" role="status"></div>
+            <strong id="loadingMessage">Working…</strong>
+            <span>This may take a few minutes for local AI models.</span>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
