@@ -23,4 +23,6 @@ public sealed class UploadOptions
     public long MaxHtmlBytes { get; set; } = 2 * 1024 * 1024;
     public long MaxManualBytes { get; set; } = 20 * 1024 * 1024;
     public long MaxImageBytes { get; set; } = 10 * 1024 * 1024;
+    public int MaxScreenshotCount { get; set; } = 10;
+    public long MaxScreenshotTotalBytes { get; set; } = 50 * 1024 * 1024;
 }

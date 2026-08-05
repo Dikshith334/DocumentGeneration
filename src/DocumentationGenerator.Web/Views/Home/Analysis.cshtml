@@ -3,6 +3,11 @@
     ViewData["Title"] = "Analysis";
     var screen = Model.Result.Screen;
     var changes = Model.Result.Changes;
+    var screenshotAnalyses = Model.Result.ScreenshotAnalyses.ToList();
+    if (screenshotAnalyses.Count == 0 && Model.Result.ScreenshotAnalysis is not null)
+    {
+        screenshotAnalyses.Add(Model.Result.ScreenshotAnalysis);
+    }
 }
 
 <div class="page-heading">
@@ -20,6 +25,7 @@
     <div><strong>@screen.InputFields.Count</strong><span>Fields</span></div>
     <div><strong>@screen.Filters.Count</strong><span>Filters</span></div>
     <div><strong>@screen.Tables.Sum(table => table.Headers.Count)</strong><span>Table columns</span></div>
+    <div><strong>@screen.ScreenshotPaths.Count</strong><span>Screenshots</span></div>
     <div><strong>@changes.AddedElements.Count</strong><span>Added</span></div>
     <div><strong>@changes.PossiblyRemovedElements.Count</strong><span>Review</span></div>
 </div>
@@ -73,8 +79,22 @@
             @if (Model.Result.ExistingManual is null) { <p class="empty-copy">No readable Word manual supplied.</p> }
             else { <p>@string.Join(" ", Model.Result.ExistingManual.DetectedStyleObservations)</p><div class="tag-list">@foreach (var heading in Model.Result.ExistingManual.Headings.Take(12)) { <span class="tag">@heading</span> }</div> }
             <h3>Screenshot observations</h3>
-            @if (screen.ScreenshotObservations.Count == 0) { <p class="empty-copy">No screenshot observations available.</p> }
-            else { <ul>@foreach (var observation in screen.ScreenshotObservations) { <li>@observation</li> }</ul> }
+            @if (screen.ScreenshotPaths.Count == 0) { <p class="empty-copy">No screenshots supplied.</p> }
+            else {
+                @for (var index = 0; index < screen.ScreenshotPaths.Count; index++) {
+                    var fileName = index < screen.ScreenshotFileNames.Count ? screen.ScreenshotFileNames[index] : $"Screenshot {index + 1}";
+                    var screenshotAnalysis = screenshotAnalyses.FirstOrDefault(result => result.SourceFileName.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+                    <div class="evidence-block">
+                        <strong>@fileName</strong>
+                        @if (screenshotAnalysis is null) { <p class="empty-copy">Saved without vision analysis.</p> }
+                        else {
+                            var observations = screenshotAnalysis.AllObservations().ToList();
+                            @if (observations.Count == 0) { <p class="empty-copy">No visible observations returned.</p> }
+                            else { <ul>@foreach (var observation in observations) { <li>@observation</li> }</ul> }
+                        }
+                    </div>
+                }
+            }
             <h3>Business rules</h3>
             <pre class="business-rules">@(string.IsNullOrWhiteSpace(screen.BusinessRules) ? "No explicit business rules supplied." : screen.BusinessRules)</pre>
         </div></div>

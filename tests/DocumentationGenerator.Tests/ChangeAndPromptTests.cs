@@ -49,7 +49,7 @@ public sealed class ChangeAndPromptTests
             Buttons = [new Button { Text = "Delete", VisibilityCondition = "isAdmin" }]
         };
 
-        var prompt = new PromptBuilder().Build(screen, null, null, new DocumentationChangeSet());
+        var prompt = new PromptBuilder().Build(screen, null, [], new DocumentationChangeSet());
 
         Assert.Contains("highest priority", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Delete is available only to Admin users.", prompt);

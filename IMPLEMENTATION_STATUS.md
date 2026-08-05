@@ -25,11 +25,12 @@ remaining generic enough for any uploaded application screen.
 ## Final Verification
 
 - Release build: succeeded with 0 warnings and 0 errors.
-- Automated tests: 18 passed, 0 failed.
+- Automated tests: 22 passed, 0 failed.
 - OpenXML validation: generated Word document has no schema errors.
 - Visual QA: every page of generated Word and PDF sample manuals was rendered and inspected.
 - PDF output: valid, paginated US Letter document with no clipping or overflow.
 - Browser workflow: upload, analysis, validation, and Ollama-unavailable guidance verified.
+- Multiple screenshots: ordered upload, per-image analysis, persistence, and Word/PDF embedding implemented.
 - Dependency audit: no known vulnerable direct or transitive NuGet packages reported.
 
 Real AI generation requires a running local Ollama instance and at least one installed

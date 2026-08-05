@@ -51,6 +51,18 @@ public static class UploadValidator
         ValidateSignature(file, kind);
     }
 
+    public static void ValidateScreenshots(IReadOnlyCollection<UploadedContent> screenshots, UploadOptions options)
+    {
+        if (screenshots.Count > options.MaxScreenshotCount)
+            throw new ValidationException($"A maximum of {options.MaxScreenshotCount} screenshots can be uploaded.");
+
+        var totalBytes = screenshots.Sum(screenshot => screenshot.Content.LongLength);
+        if (totalBytes > options.MaxScreenshotTotalBytes)
+            throw new ValidationException("The combined screenshot size exceeds the configured upload limit.");
+
+        foreach (var screenshot in screenshots) Validate(screenshot, UploadKind.Screenshot, options);
+    }
+
     private static void ValidateSignature(UploadedContent file, UploadKind kind)
     {
         var bytes = file.Content;

@@ -17,8 +17,8 @@ public sealed class NewGenerationViewModel
     [Display(Name = "Existing Word manual (optional)")]
     public IFormFile? ExistingManual { get; set; }
 
-    [Display(Name = "Screen screenshot (optional)")]
-    public IFormFile? Screenshot { get; set; }
+    [Display(Name = "Screen screenshots (optional)")]
+    public List<IFormFile> Screenshots { get; set; } = [];
 
     [Display(Name = "Business rules (optional)")]
     public string? BusinessRules { get; set; }

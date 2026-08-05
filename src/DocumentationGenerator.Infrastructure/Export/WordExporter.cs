@@ -26,9 +26,17 @@ public sealed class WordExporter : IWordExporter
 
         body.Append(Paragraph(manual.Title, "Title", JustificationValues.Center));
         body.Append(Paragraph($"Generated {manual.GeneratedDate:dd MMMM yyyy}", "Subtitle", JustificationValues.Center));
-        if (!string.IsNullOrWhiteSpace(manual.CoverImagePath) && File.Exists(manual.CoverImagePath))
+        var screenshots = manual.ScreenshotPaths.Count > 0
+            ? manual.ScreenshotPaths
+            : string.IsNullOrWhiteSpace(manual.CoverImagePath) ? [] : [manual.CoverImagePath];
+        for (var index = 0; index < screenshots.Count; index++)
         {
-            AddImage(mainPart, body, manual.CoverImagePath);
+            if (!File.Exists(screenshots[index])) continue;
+            AddImage(mainPart, body, screenshots[index], (uint)(index + 1));
+            var caption = index < manual.ScreenshotFileNames.Count
+                ? manual.ScreenshotFileNames[index]
+                : $"Screenshot {index + 1}";
+            body.Append(Paragraph(caption, "Subtitle", JustificationValues.Center));
         }
         AddText(body, "Overview", manual.Overview);
         AddText(body, "Navigation", manual.Navigation);
@@ -308,7 +316,7 @@ public sealed class WordExporter : IWordExporter
         footerPart.Footer.Save();
     }
 
-    private static void AddImage(MainDocumentPart mainPart, Body body, string path)
+    private static void AddImage(MainDocumentPart mainPart, Body body, string path, uint imageId)
     {
         var extension = Path.GetExtension(path).ToLowerInvariant();
         if (extension is not (".png" or ".jpg" or ".jpeg")) return;
@@ -321,7 +329,7 @@ public sealed class WordExporter : IWordExporter
             new DW.Inline(
                 new DW.Extent { Cx = width, Cy = height },
                 new DW.EffectExtent { LeftEdge = 0L, TopEdge = 0L, RightEdge = 0L, BottomEdge = 0L },
-                new DW.DocProperties { Id = 1U, Name = "Application screenshot" },
+                new DW.DocProperties { Id = imageId, Name = $"Application screenshot {imageId}" },
                 new DW.NonVisualGraphicFrameDrawingProperties(new A.GraphicFrameLocks { NoChangeAspect = true }),
                 new A.Graphic(new A.GraphicData(
                     new PIC.Picture(

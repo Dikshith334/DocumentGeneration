@@ -51,9 +51,10 @@
                 <div class="form-text">Optional · .docx</div>
             </div>
             <div class="col-md-6">
-                <label asp-for="Screenshot" class="form-label"></label>
-                <input asp-for="Screenshot" class="form-control" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
-                <div class="form-text">Optional · PNG, JPEG, or WebP</div>
+                <label asp-for="Screenshots" class="form-label"></label>
+                <input asp-for="Screenshots" class="form-control" multiple accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
+                <div class="form-text">Optional · select up to 10 files · PNG or JPEG recommended for document embedding</div>
+                <span asp-validation-for="Screenshots" class="text-danger"></span>
             </div>
             <div class="col-12">
                 <label asp-for="BusinessRules" class="form-label"></label>

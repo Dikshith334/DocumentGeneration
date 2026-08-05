@@ -1,7 +1,7 @@
 # AI-Powered User Manual Generator
 
 A complete local-first ASP.NET Core MVC application that analyzes Angular or ordinary
-HTML screens, compares an optional existing Word manual, optionally examines a screenshot
+HTML screens, compares an optional existing Word manual, optionally examines multiple screenshots
 with an Ollama vision model, and generates a structured professional user manual through a
 local Ollama text model. Generated manuals can be previewed and downloaded as Markdown,
 Word, or PDF.
@@ -112,7 +112,9 @@ Settings live in `src/DocumentationGenerator.Web/appsettings.json`:
     "MaxHtmlBytes": 2097152,
     "MaxManualBytes": 20971520,
     "MaxImageBytes": 10485760,
-    "MaxRequestBytes": 36700160
+    "MaxScreenshotCount": 10,
+    "MaxScreenshotTotalBytes": 52428800,
+    "MaxRequestBytes": 83886080
   }
 }
 ```
@@ -151,9 +153,9 @@ configured in `src/DocumentationGenerator.Web/Properties/launchSettings.json`.
 3. Upload `samples/CustomerManagement/customer-management.component.html`.
 4. Paste `samples/CustomerManagement/business-rules.txt` into **Business rules**.
 5. Optionally upload a `.docx` existing manual.
-6. Optionally upload a PNG, JPEG, or WebP screenshot and choose an installed vision model.
+6. Optionally upload up to ten PNG, JPEG, or WebP screenshots and choose an installed vision model.
 7. Select **Analyze screen**.
-8. Review buttons, fields, dropdowns, filters, table columns, screenshot observations, and
+8. Review buttons, fields, dropdowns, filters, table columns, per-screenshot observations, and
    documentation changes.
 9. Choose an installed text model and select **Generate user manual**.
 10. Preview the result and download Markdown, Word, or PDF.
@@ -165,7 +167,7 @@ six customer table columns; sorting; tooltips; and pagination.
 ## Processing flow
 
 ```text
-Angular or HTML + optional DOCX + optional screenshot + business rules
+Angular or HTML + optional DOCX + optional screenshots + business rules
                               ↓
             safe upload and static source parsing
                               ↓
@@ -197,9 +199,10 @@ reported as not specified or requiring review.
 - **Change detection:** normalized phrase matching and Levenshtein similarity distinguish
   added, existing, possibly renamed, and possibly removed items. Uncertain removals always
   require review because static HTML cannot prove a runtime removal.
-- **Screenshot analysis:** images are Base64-encoded and sent to the selected local vision
-  model with a visible-evidence-only JSON prompt. Failure is a warning and does not block
-  HTML/manual analysis.
+- **Screenshot analysis:** each image is Base64-encoded and sent sequentially to the selected
+  local vision model with a visible-evidence-only JSON prompt. Per-image failure is a warning
+  and does not block HTML/manual analysis. PNG and JPEG images are embedded in upload order in
+  Word and PDF exports; WebP remains available for visual analysis.
 - **Ollama:** `IHttpClientFactory` is used for `/api/version`, `/api/tags`, and `/api/chat`,
   with timeout, cancellation, installed-model validation, low temperature, JSON cleanup,
   and one repair request for malformed JSON.
@@ -216,7 +219,7 @@ reported as not specified or requiring review.
 - Source files: `.html` and `.htm` only.
 - Existing manuals: `.docx` only, with ZIP signature validation.
 - Screenshots: `.png`, `.jpg`, `.jpeg`, and `.webp`, with basic signature validation.
-- Upload limits are configurable per file type and for the total multipart request.
+- Screenshot count, per-image size, combined image size, and total request limits are configurable.
 - Original upload paths are never trusted; only base names and generated storage names are
   used.
 - Preview values are rendered by Razor's default HTML encoding.
@@ -283,12 +286,12 @@ the PDF.
 - Complex formatting from an existing Word manual is not fully preserved.
 - Change detection is based on normalized text and edit similarity and can require human
   review.
-- A single screenshot and a DOCX input manual are supported in this MVP.
+- One DOCX input manual and up to ten screenshots are supported in the default configuration.
 
 ## Future improvements
 
 The boundaries allow later addition of an Angular TypeScript parser, Git integration,
-CI/CD generation, documentation version history, navigation mapping, OCR, multiple
-screenshots, PDF input manuals, DOCX templates, approval and feedback workflows, database
+CI/CD generation, documentation version history, navigation mapping, OCR,
+PDF input manuals, DOCX templates, approval and feedback workflows, database
 persistence, a REST API, batch generation, and Git-diff-based updates without changing the
 domain model's dependency direction.

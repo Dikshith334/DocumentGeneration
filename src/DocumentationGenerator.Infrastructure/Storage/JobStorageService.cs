@@ -39,7 +39,7 @@ public sealed class JobStorageService : IJobStorageService
         {
             UploadKind.Html => "screen" + extension,
             UploadKind.ExistingManual => "existing-manual.docx",
-            UploadKind.Screenshot => "screenshot" + extension,
+            UploadKind.Screenshot => $"screenshot-{Guid.NewGuid():N}" + extension,
             _ => throw new ArgumentOutOfRangeException(nameof(kind))
         };
         var path = SafeCombine(Path.Combine(GetJobPath(jobId), "uploads"), generatedName);

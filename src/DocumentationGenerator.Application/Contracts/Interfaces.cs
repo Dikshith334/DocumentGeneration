@@ -29,7 +29,7 @@ public interface IDocumentationChangeDetector
 
 public interface IPromptBuilder
 {
-    string Build(Screen screen, ExistingManual? manual, ScreenshotAnalysisResult? screenshot,
+    string Build(Screen screen, ExistingManual? manual, IReadOnlyCollection<ScreenshotAnalysisResult> screenshots,
         DocumentationChangeSet changes);
 }
 

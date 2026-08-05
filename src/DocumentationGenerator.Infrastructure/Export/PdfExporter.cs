@@ -22,8 +22,18 @@ public sealed class PdfExporter : IPdfExporter
         writer.Title(manual.Title);
         writer.Centered($"Generated {manual.GeneratedDate:dd MMMM yyyy}", muted: true);
         writer.Space(12);
-        if (!string.IsNullOrWhiteSpace(manual.CoverImagePath) && File.Exists(manual.CoverImagePath))
-            writer.Image(manual.CoverImagePath);
+        var screenshots = manual.ScreenshotPaths.Count > 0
+            ? manual.ScreenshotPaths
+            : string.IsNullOrWhiteSpace(manual.CoverImagePath) ? [] : [manual.CoverImagePath];
+        for (var index = 0; index < screenshots.Count; index++)
+        {
+            if (!File.Exists(screenshots[index])) continue;
+            writer.Image(screenshots[index]);
+            writer.Centered(index < manual.ScreenshotFileNames.Count
+                ? manual.ScreenshotFileNames[index]
+                : $"Screenshot {index + 1}", muted: true);
+            writer.Space(8);
+        }
         writer.TextSection("Overview", manual.Overview);
         writer.TextSection("Navigation", manual.Navigation);
         writer.TextSection("Screen overview", manual.ScreenOverview);

@@ -13,7 +13,7 @@ public sealed class PromptBuilder : IPromptBuilder
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public string Build(Screen screen, ExistingManual? manual, ScreenshotAnalysisResult? screenshot,
+    public string Build(Screen screen, ExistingManual? manual, IReadOnlyCollection<ScreenshotAnalysisResult> screenshots,
         DocumentationChangeSet changes)
     {
         var prompt = new StringBuilder();
@@ -39,7 +39,9 @@ public sealed class PromptBuilder : IPromptBuilder
         prompt.AppendLine(manual is null ? "No existing manual supplied." : JsonSerializer.Serialize(manual, JsonOptions));
         prompt.AppendLine();
         prompt.AppendLine("VISIBLE SCREENSHOT OBSERVATIONS:");
-        prompt.AppendLine(screenshot is null ? "No screenshot analysis supplied." : JsonSerializer.Serialize(screenshot, JsonOptions));
+        prompt.AppendLine(screenshots.Count == 0
+            ? "No screenshot analysis supplied."
+            : JsonSerializer.Serialize(screenshots, JsonOptions));
         prompt.AppendLine();
         prompt.AppendLine("DOCUMENTATION CHANGE ANALYSIS:");
         prompt.AppendLine(JsonSerializer.Serialize(changes, JsonOptions));

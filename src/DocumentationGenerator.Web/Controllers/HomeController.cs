@@ -30,7 +30,7 @@ public sealed class HomeController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequestFormLimits(MultipartBodyLengthLimit = 36_700_160)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 83_886_080)]
     public async Task<IActionResult> Analyze(NewGenerationViewModel model, CancellationToken cancellationToken)
     {
         if (model.HtmlFile is null) ModelState.AddModelError(nameof(model.HtmlFile), "Choose an HTML file.");
@@ -47,7 +47,7 @@ public sealed class HomeController(
                 ScreenName = model.ScreenName,
                 HtmlFile = await ReadUploadAsync(model.HtmlFile!, cancellationToken),
                 ExistingManual = model.ExistingManual is null ? null : await ReadUploadAsync(model.ExistingManual, cancellationToken),
-                Screenshot = model.Screenshot is null ? null : await ReadUploadAsync(model.Screenshot, cancellationToken),
+                Screenshots = await ReadUploadsAsync(model.Screenshots, cancellationToken),
                 BusinessRules = model.BusinessRules ?? string.Empty,
                 VisionModel = model.VisionModel ?? string.Empty
             }, cancellationToken);
@@ -177,5 +177,14 @@ public sealed class HomeController(
         await using var stream = new MemoryStream();
         await file.CopyToAsync(stream, cancellationToken);
         return new UploadedContent { FileName = Path.GetFileName(file.FileName), Content = stream.ToArray() };
+    }
+
+    private static async Task<List<UploadedContent>> ReadUploadsAsync(IEnumerable<IFormFile> files,
+        CancellationToken cancellationToken)
+    {
+        var uploads = new List<UploadedContent>();
+        foreach (var file in files.Where(file => file.Length > 0))
+            uploads.Add(await ReadUploadAsync(file, cancellationToken));
+        return uploads;
     }
 }

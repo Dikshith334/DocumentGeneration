@@ -8,6 +8,8 @@ public sealed class Screen
     public string Name { get; set; } = string.Empty;
     public string SourceFileName { get; set; } = string.Empty;
     public string? ScreenshotPath { get; set; }
+    public List<string> ScreenshotPaths { get; set; } = [];
+    public List<string> ScreenshotFileNames { get; set; } = [];
     public string? ExistingManualPath { get; set; }
     public string Description { get; set; } = string.Empty;
     public string NavigationPath { get; set; } = string.Empty;
@@ -167,6 +169,7 @@ public sealed class DocumentationElement
 
 public sealed class ScreenshotAnalysisResult
 {
+    public string SourceFileName { get; set; } = string.Empty;
     public bool Succeeded { get; set; }
     public string ScreenTitle { get; set; } = string.Empty;
     public List<string> MainSections { get; set; } = [];
@@ -210,6 +213,12 @@ public sealed class UserManual
 
     [JsonIgnore]
     public string? CoverImagePath { get; set; }
+
+    [JsonIgnore]
+    public List<string> ScreenshotPaths { get; set; } = [];
+
+    [JsonIgnore]
+    public List<string> ScreenshotFileNames { get; set; } = [];
 }
 
 public sealed class ManualSection
@@ -284,6 +293,7 @@ public sealed class AnalysisRequest
     public required UploadedContent HtmlFile { get; init; }
     public UploadedContent? ExistingManual { get; init; }
     public UploadedContent? Screenshot { get; init; }
+    public List<UploadedContent> Screenshots { get; init; } = [];
     public string BusinessRules { get; set; } = string.Empty;
     public string VisionModel { get; set; } = string.Empty;
 }
@@ -294,6 +304,7 @@ public sealed class AnalysisResult
     public Screen Screen { get; set; } = new();
     public ExistingManual? ExistingManual { get; set; }
     public ScreenshotAnalysisResult? ScreenshotAnalysis { get; set; }
+    public List<ScreenshotAnalysisResult> ScreenshotAnalyses { get; set; } = [];
     public DocumentationChangeSet Changes { get; set; } = new();
     public List<string> Warnings { get; set; } = [];
 }

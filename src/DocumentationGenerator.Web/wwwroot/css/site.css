@@ -47,7 +47,7 @@ body { min-height: 100vh; margin: 0; color: var(--ink); background: var(--page);
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 .page-heading h1 { margin: 4px 0 4px; font-weight: 780; letter-spacing: -.035em; }
 .page-heading p { margin: 0; color: var(--muted); }
-.summary-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.summary-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
 .summary-grid > div { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .summary-grid strong { display: block; color: var(--navy); font-size: 1.75rem; line-height: 1; }
 .summary-grid span { display: block; margin-top: 7px; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; }

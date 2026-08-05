@@ -32,10 +32,9 @@ public sealed class DocumentationService(
         {
             UploadValidator.Validate(request.ExistingManual, UploadKind.ExistingManual, uploadOptions.Value);
         }
-        if (request.Screenshot is not null)
-        {
-            UploadValidator.Validate(request.Screenshot, UploadKind.Screenshot, uploadOptions.Value);
-        }
+        var screenshots = request.Screenshots.ToList();
+        if (request.Screenshot is not null) screenshots.Insert(0, request.Screenshot);
+        UploadValidator.ValidateScreenshots(screenshots, uploadOptions.Value);
 
         var jobId = await storage.CreateJobAsync(cancellationToken);
         logger.LogInformation("Job {JobId} started", jobId);
@@ -69,36 +68,46 @@ public sealed class DocumentationService(
             }
         }
 
-        ScreenshotAnalysisResult? screenshotResult = null;
-        if (request.Screenshot is not null)
+        var screenshotResults = new List<ScreenshotAnalysisResult>();
+        if (screenshots.Count > 0)
         {
-            var path = await storage.SaveUploadAsync(jobId, request.Screenshot, UploadKind.Screenshot, cancellationToken);
-            screen.ScreenshotPath = path;
             var visionModel = string.IsNullOrWhiteSpace(request.VisionModel)
                 ? ollamaOptions.Value.VisionModel
                 : request.VisionModel.Trim();
             if (string.IsNullOrWhiteSpace(visionModel))
             {
-                warnings.Add("A screenshot was saved, but no vision model was selected. Screenshot analysis was skipped.");
+                warnings.Add($"{screenshots.Count} screenshot(s) were saved, but no vision model was selected. Visual analysis was skipped.");
             }
-            else
+
+            foreach (var screenshot in screenshots)
             {
+                var path = await storage.SaveUploadAsync(jobId, screenshot, UploadKind.Screenshot, cancellationToken);
+                screen.ScreenshotPaths.Add(path);
+                screen.ScreenshotFileNames.Add(screenshot.FileName);
+                screen.ScreenshotPath ??= path;
+                if (Path.GetExtension(screenshot.FileName).Equals(".webp", StringComparison.OrdinalIgnoreCase))
+                    warnings.Add($"{screenshot.FileName} can be visually analyzed, but only PNG and JPEG screenshots are embedded in exported documents.");
+                if (string.IsNullOrWhiteSpace(visionModel)) continue;
+
                 try
                 {
-                    screenshotResult = await screenshotAnalyzer.AnalyzeAsync(path, visionModel, cancellationToken);
-                    screen.ScreenshotObservations = screenshotResult.AllObservations().Distinct().ToList();
-                    if (!string.IsNullOrWhiteSpace(screenshotResult.Warning))
-                    {
-                        warnings.Add(screenshotResult.Warning);
-                    }
-                    logger.LogInformation("Screenshot analysis completed for job {JobId}", jobId);
+                    var screenshotResult = await screenshotAnalyzer.AnalyzeAsync(path, visionModel, cancellationToken);
+                    screenshotResult.SourceFileName = screenshot.FileName;
+                    screenshotResults.Add(screenshotResult);
+                    screen.ScreenshotObservations.AddRange(screenshotResult.AllObservations()
+                        .Select(observation => $"{screenshot.FileName}: {observation}"));
+                    if (!string.IsNullOrWhiteSpace(screenshotResult.Warning)) warnings.Add($"{screenshot.FileName}: {screenshotResult.Warning}");
+                    logger.LogInformation("Screenshot {ScreenshotFileName} analysis completed for job {JobId}",
+                        screenshot.FileName, jobId);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    logger.LogWarning(ex, "Screenshot analysis failed for job {JobId}", jobId);
-                    warnings.Add("Screenshot analysis failed. HTML, existing manual, and business-rule analysis remains available.");
+                    logger.LogWarning(ex, "Screenshot {ScreenshotFileName} analysis failed for job {JobId}",
+                        screenshot.FileName, jobId);
+                    warnings.Add($"Screenshot analysis failed for {screenshot.FileName}. Other source analysis remains available.");
                 }
             }
+            screen.ScreenshotObservations = screen.ScreenshotObservations.Distinct().ToList();
         }
 
         var changes = changeDetector.Detect(screen, existingManual);
@@ -107,7 +116,8 @@ public sealed class DocumentationService(
             JobId = jobId,
             Screen = screen,
             ExistingManual = existingManual,
-            ScreenshotAnalysis = screenshotResult,
+            ScreenshotAnalysis = screenshotResults.FirstOrDefault(),
+            ScreenshotAnalyses = screenshotResults,
             Changes = changes,
             Warnings = warnings
         };
@@ -130,8 +140,11 @@ public sealed class DocumentationService(
         try
         {
             var analysis = snapshot.Analysis;
+            var screenshotAnalyses = analysis.ScreenshotAnalyses.Count > 0
+                ? analysis.ScreenshotAnalyses
+                : analysis.ScreenshotAnalysis is null ? [] : [analysis.ScreenshotAnalysis];
             var prompt = promptBuilder.Build(analysis.Screen, analysis.ExistingManual,
-                analysis.ScreenshotAnalysis, analysis.Changes);
+                screenshotAnalyses, analysis.Changes);
             logger.LogInformation("Sending Ollama generation request for job {JobId}", request.JobId);
             var manual = await ollamaService.GenerateJsonAsync<UserManual>(model, prompt, cancellationToken);
             NormalizeManual(manual, analysis);
@@ -185,7 +198,16 @@ public sealed class DocumentationService(
             manual.Title = $"{analysis.Screen.Name} User Manual";
         }
         manual.GeneratedDate = DateTimeOffset.UtcNow;
-        manual.CoverImagePath = analysis.Screen.ScreenshotPath;
+        var screenshotPaths = analysis.Screen.ScreenshotPaths.Count > 0
+            ? analysis.Screen.ScreenshotPaths
+            : analysis.Screen.ScreenshotPath is null ? [] : [analysis.Screen.ScreenshotPath!];
+        manual.ScreenshotPaths = screenshotPaths.Where(IsEmbeddableScreenshot).ToList();
+        manual.ScreenshotFileNames = analysis.Screen.ScreenshotFileNames.Count == screenshotPaths.Count
+            ? analysis.Screen.ScreenshotFileNames
+                .Where((_, index) => IsEmbeddableScreenshot(screenshotPaths[index])).ToList()
+            : manual.ScreenshotPaths.Select((path, index) =>
+                Path.GetFileName(path) ?? $"Screenshot {index + 1}").ToList();
+        manual.CoverImagePath = manual.ScreenshotPaths.FirstOrDefault();
         if (manual.SourceInformation.Count == 0)
         {
             manual.SourceInformation.Add(new SourceReference
@@ -203,13 +225,19 @@ public sealed class DocumentationService(
                     Summary = "Used for accurate existing content and writing-style guidance."
                 });
             }
-            if (analysis.Screen.ScreenshotPath is not null)
+            for (var index = 0; index < screenshotPaths.Count; index++)
             {
+                var originalName = index < analysis.Screen.ScreenshotFileNames.Count
+                    ? analysis.Screen.ScreenshotFileNames[index]
+                    : Path.GetFileName(screenshotPaths[index]);
+                var analyzed = analysis.ScreenshotAnalyses.Any(result =>
+                    result.SourceFileName.Equals(originalName, StringComparison.OrdinalIgnoreCase)) ||
+                               analysis.ScreenshotAnalysis?.Succeeded == true && index == 0;
                 manual.SourceInformation.Add(new SourceReference
                 {
                     SourceType = "Screenshot",
-                    FileName = Path.GetFileName(analysis.Screen.ScreenshotPath),
-                    Summary = analysis.ScreenshotAnalysis?.Succeeded == true
+                    FileName = originalName,
+                    Summary = analyzed
                         ? "Used for visible layout observations."
                         : "Supplied but not analyzed."
                 });
@@ -229,6 +257,9 @@ public sealed class DocumentationService(
         html.Contains("[(ngModel)]", StringComparison.OrdinalIgnoreCase) ||
         html.Contains("formControlName", StringComparison.OrdinalIgnoreCase) ||
         html.Contains("<mat-", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsEmbeddableScreenshot(string path) =>
+        Path.GetExtension(path) is ".png" or ".jpg" or ".jpeg";
 
     private static string Slug(string value)
     {
