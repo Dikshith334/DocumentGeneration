@@ -20,6 +20,10 @@ public sealed class NewGenerationViewModel
     [Display(Name = "Screen screenshots (optional)")]
     public List<IFormFile> Screenshots { get; set; } = [];
 
+    public List<string> ScreenshotCaptions { get; set; } = [];
+
+    public int MaxScreenshotCount { get; set; } = 10;
+
     [Display(Name = "Business rules (optional)")]
     public string? BusinessRules { get; set; }
 

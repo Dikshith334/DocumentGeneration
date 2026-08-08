@@ -52,9 +52,54 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Screenshots" class="form-label"></label>
-                <input asp-for="Screenshots" class="form-control" multiple accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
-                <div class="form-text">Optional · select up to 10 files · PNG or JPEG recommended for document embedding</div>
+                <input asp-for="Screenshots" class="form-control" multiple
+                       accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                       data-screenshot-input data-max-files="@Model.MaxScreenshotCount" />
+                <div class="form-text">Optional · select up to @Model.MaxScreenshotCount files · PNG or JPEG recommended for document embedding</div>
                 <span asp-validation-for="Screenshots" class="text-danger"></span>
+                <div class="screenshot-status" data-screenshot-status role="status" aria-live="polite"></div>
+            </div>
+            <div class="col-12">
+                <section class="screenshot-gallery" data-screenshot-gallery hidden aria-label="Selected screenshot gallery">
+                    <div class="screenshot-gallery-header">
+                        <div>
+                            <strong>Organize screenshots</strong>
+                            <p>Drag cards into document order, add clear captions, or use the move buttons.</p>
+                        </div>
+                        <span class="screenshot-count"><b data-screenshot-count>0</b> / @Model.MaxScreenshotCount selected</span>
+                    </div>
+                    <div class="screenshot-grid" data-screenshot-list></div>
+                </section>
+                <input type="file" hidden tabindex="-1" data-screenshot-replacement
+                       accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
+                <template data-screenshot-card-template>
+                    <article class="screenshot-card">
+                        <div class="screenshot-thumbnail">
+                            <img data-screenshot-preview alt="" />
+                            <span class="screenshot-order" data-screenshot-order></span>
+                        </div>
+                        <div class="screenshot-card-body">
+                            <div class="screenshot-card-heading">
+                                <span class="drag-handle" draggable="true" data-screenshot-drag-handle
+                                      aria-hidden="true" title="Drag to reorder">&#8942;&#8942;</span>
+                                <div>
+                                    <strong data-screenshot-filename></strong>
+                                    <small data-screenshot-size></small>
+                                </div>
+                            </div>
+                            <label class="form-label screenshot-caption-label">Caption
+                                <input type="text" name="ScreenshotCaptions" class="form-control"
+                                       maxlength="160" data-screenshot-caption />
+                            </label>
+                            <div class="screenshot-actions">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-screenshot-up>Move up</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-screenshot-down>Move down</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-screenshot-replace>Replace</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-screenshot-remove>Remove</button>
+                            </div>
+                        </div>
+                    </article>
+                </template>
             </div>
             <div class="col-12">
                 <label asp-for="BusinessRules" class="form-label"></label>

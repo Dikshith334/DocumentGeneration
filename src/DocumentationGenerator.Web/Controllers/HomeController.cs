@@ -14,6 +14,7 @@ public sealed class HomeController(
     IOllamaService ollamaService,
     IJobStorageService storage,
     IOptions<OllamaOptions> ollamaOptions,
+    IOptions<UploadOptions> uploadOptions,
     ILogger<HomeController> logger) : Controller
 {
     [HttpGet]
@@ -42,12 +43,14 @@ public sealed class HomeController(
 
         try
         {
+            var screenshots = await ReadUploadsAsync(model.Screenshots, cancellationToken);
             var result = await documentationService.AnalyzeAsync(new AnalysisRequest
             {
                 ScreenName = model.ScreenName,
                 HtmlFile = await ReadUploadAsync(model.HtmlFile!, cancellationToken),
                 ExistingManual = model.ExistingManual is null ? null : await ReadUploadAsync(model.ExistingManual, cancellationToken),
-                Screenshots = await ReadUploadsAsync(model.Screenshots, cancellationToken),
+                Screenshots = screenshots,
+                ScreenshotCaptions = model.ScreenshotCaptions,
                 BusinessRules = model.BusinessRules ?? string.Empty,
                 VisionModel = model.VisionModel ?? string.Empty
             }, cancellationToken);
@@ -134,6 +137,7 @@ public sealed class HomeController(
     private async Task PopulateModelsAsync(NewGenerationViewModel model, CancellationToken cancellationToken)
     {
         var (available, message, models) = await GetModelsAsync(cancellationToken);
+        model.MaxScreenshotCount = uploadOptions.Value.MaxScreenshotCount;
         model.OllamaAvailable = available;
         model.OllamaMessage = message;
         model.Models = ToItems(models, model.TextModel, model.VisionModel);
@@ -183,7 +187,7 @@ public sealed class HomeController(
         CancellationToken cancellationToken)
     {
         var uploads = new List<UploadedContent>();
-        foreach (var file in files.Where(file => file.Length > 0))
+        foreach (var file in files)
             uploads.Add(await ReadUploadAsync(file, cancellationToken));
         return uploads;
     }

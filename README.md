@@ -153,7 +153,8 @@ configured in `src/DocumentationGenerator.Web/Properties/launchSettings.json`.
 3. Upload `samples/CustomerManagement/customer-management.component.html`.
 4. Paste `samples/CustomerManagement/business-rules.txt` into **Business rules**.
 5. Optionally upload a `.docx` existing manual.
-6. Optionally upload up to ten PNG, JPEG, or WebP screenshots and choose an installed vision model.
+6. Optionally upload up to ten PNG, JPEG, or WebP screenshots. Review their thumbnails, replace or
+   remove images, drag them into document order, and add friendly captions.
 7. Select **Analyze screen**.
 8. Review buttons, fields, dropdowns, filters, table columns, per-screenshot observations, and
    documentation changes.
@@ -199,10 +200,13 @@ reported as not specified or requiring review.
 - **Change detection:** normalized phrase matching and Levenshtein similarity distinguish
   added, existing, possibly renamed, and possibly removed items. Uncertain removals always
   require review because static HTML cannot prove a runtime removal.
+- **Screenshot gallery:** selected images appear as thumbnails before analysis. Images can be
+  removed, replaced, reordered by drag-and-drop or move buttons, and given captions that flow into
+  the analysis review and exported Word/PDF documents.
 - **Screenshot analysis:** each image is Base64-encoded and sent sequentially to the selected
   local vision model with a visible-evidence-only JSON prompt. Per-image failure is a warning
-  and does not block HTML/manual analysis. PNG and JPEG images are embedded in upload order in
-  Word and PDF exports; WebP remains available for visual analysis.
+  and does not block HTML/manual analysis. PNG and JPEG images are embedded in the organized order
+  in Word and PDF exports; WebP remains available for visual analysis.
 - **Ollama:** `IHttpClientFactory` is used for `/api/version`, `/api/tags`, and `/api/chat`,
   with timeout, cancellation, installed-model validation, low temperature, JSON cleanup,
   and one repair request for malformed JSON.

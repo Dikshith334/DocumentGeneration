@@ -72,13 +72,18 @@ public sealed class ExportAndValidationTests
             var manual = Manual();
             manual.ScreenshotPaths = [firstImage, secondImage];
             manual.ScreenshotFileNames = ["overview.png", "details.png"];
+            manual.ScreenshotCaptions = ["Customer overview", "Customer details"];
 
             await new WordExporter().ExportAsync(manual, outputPath);
 
             using var document = WordprocessingDocument.Open(outputPath, false);
             Assert.Equal(2, document.MainDocumentPart!.ImageParts.Count());
-            Assert.Contains("overview.png", document.MainDocumentPart.Document.Body!.InnerText);
-            Assert.Contains("details.png", document.MainDocumentPart.Document.Body.InnerText);
+            var bodyText = document.MainDocumentPart.Document.Body!.InnerText;
+            Assert.Contains("Customer overview", bodyText);
+            Assert.Contains("Customer details", bodyText);
+            Assert.DoesNotContain("overview.png", bodyText);
+            Assert.True(bodyText.IndexOf("Customer overview", StringComparison.Ordinal) <
+                        bodyText.IndexOf("Customer details", StringComparison.Ordinal));
         }
         finally
         {
@@ -181,6 +186,36 @@ public sealed class ExportAndValidationTests
             }));
 
         Assert.Contains("combined screenshot size", exception.Message);
+    }
+
+    [Fact]
+    public void Normalizes_Screenshot_Captions_And_Falls_Back_To_Friendly_File_Names()
+    {
+        var screenshots = new List<UploadedContent>
+        {
+            new() { FileName = "customer-overview.png", Content = PngBytes() },
+            new() { FileName = "order_details.png", Content = PngBytes() }
+        };
+
+        var captions = UploadValidator.NormalizeScreenshotCaptions(
+            screenshots, ["  Main   customer\r\n overview  ", ""]);
+
+        Assert.Equal(["Main customer overview", "Order details"], captions);
+    }
+
+    [Fact]
+    public void Rejects_Overlong_Screenshot_Captions()
+    {
+        var screenshots = new List<UploadedContent>
+        {
+            new() { FileName = "overview.png", Content = PngBytes() }
+        };
+
+        var exception = Assert.Throws<ValidationException>(() =>
+            UploadValidator.NormalizeScreenshotCaptions(
+                screenshots, [new string('x', UploadValidator.MaxScreenshotCaptionLength + 1)]));
+
+        Assert.Contains("cannot exceed", exception.Message);
     }
 
     private static UserManual Manual() => new()

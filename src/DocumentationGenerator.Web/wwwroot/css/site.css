@@ -37,6 +37,32 @@ body { min-height: 100vh; margin: 0; color: var(--ink); background: var(--page);
 .form-control, .form-select { border-color: #cfd9e5; min-height: 45px; }
 .form-control:focus, .form-select:focus { border-color: #4b97f4; box-shadow: 0 0 0 .2rem rgba(23, 105, 224, .12); }
 .rule-editor { min-height: 140px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .9rem; line-height: 1.6; }
+.screenshot-status { min-height: 20px; margin-top: 5px; color: #37658f; font-size: .82rem; }
+.screenshot-status.is-error { color: #a61b1b; }
+.screenshot-gallery { padding: 18px; border: 1px solid #bfd7f2; border-radius: 14px; background: #f5f9ff; }
+.screenshot-gallery-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.screenshot-gallery-header strong { color: var(--navy); font-size: 1rem; }
+.screenshot-gallery-header p { margin: 3px 0 0; color: var(--muted); font-size: .86rem; }
+.screenshot-count { flex: none; padding: 7px 11px; border-radius: 999px; color: #315f93; background: #e4f0ff; font-size: .8rem; }
+.screenshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(430px, 100%), 1fr)); gap: 14px; }
+.screenshot-card { display: grid; grid-template-columns: 150px minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 5px 16px rgba(30, 55, 86, .06); transition: border-color .16s ease, box-shadow .16s ease, opacity .16s ease, transform .16s ease; }
+.screenshot-card.is-dragging { opacity: .45; transform: scale(.985); }
+.screenshot-card.is-drop-target { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(23, 105, 224, .14); }
+.screenshot-thumbnail { position: relative; display: grid; min-height: 178px; place-items: center; overflow: hidden; border-right: 1px solid var(--line); background: #eaf0f7; }
+.screenshot-thumbnail img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; }
+.screenshot-order { position: absolute; top: 9px; left: 9px; display: grid; width: 27px; height: 27px; place-items: center; border-radius: 50%; color: #fff; background: rgba(18, 51, 92, .9); font-size: .78rem; font-weight: 800; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+.screenshot-card-body { min-width: 0; padding: 14px; }
+.screenshot-card-heading { display: flex; align-items: flex-start; gap: 9px; min-width: 0; margin-bottom: 11px; }
+.screenshot-card-heading > div { min-width: 0; }
+.screenshot-card-heading strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screenshot-card-heading small { display: block; margin-top: 2px; color: var(--muted); }
+.drag-handle { flex: none; margin-top: -3px; color: #6f8095; font-size: 1.25rem; line-height: 1; letter-spacing: -5px; cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+.screenshot-caption-label { display: grid; gap: 5px; margin: 0; font-size: .82rem; }
+.screenshot-caption-label .form-control { min-height: 38px; padding: 7px 9px; font-size: .88rem; }
+.screenshot-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.screenshot-actions .btn { font-size: .75rem; }
+.screenshot-actions .btn:focus-visible, .screenshot-caption-label .form-control:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .action-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 28px; color: var(--muted); border-top: 1px solid var(--line); background: #f9fbfd; }
 .btn { border-radius: 9px; font-weight: 680; }
 .btn-primary { border-color: var(--blue); background: var(--blue); }
@@ -104,4 +130,7 @@ code { color: #315f93; background: #eef4fa; padding: 2px 5px; border-radius: 4px
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .download-actions { width: 100%; }
   .download-actions .btn { flex: 1; }
+  .screenshot-gallery-header { flex-direction: column; }
+  .screenshot-card { grid-template-columns: 1fr; }
+  .screenshot-thumbnail { min-height: 190px; border-right: 0; border-bottom: 1px solid var(--line); }
 }

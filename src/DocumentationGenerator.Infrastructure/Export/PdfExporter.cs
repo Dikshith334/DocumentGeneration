@@ -29,9 +29,13 @@ public sealed class PdfExporter : IPdfExporter
         {
             if (!File.Exists(screenshots[index])) continue;
             writer.Image(screenshots[index]);
-            writer.Centered(index < manual.ScreenshotFileNames.Count
-                ? manual.ScreenshotFileNames[index]
-                : $"Screenshot {index + 1}", muted: true);
+            var caption = index < manual.ScreenshotCaptions.Count &&
+                          !string.IsNullOrWhiteSpace(manual.ScreenshotCaptions[index])
+                ? manual.ScreenshotCaptions[index]
+                : index < manual.ScreenshotFileNames.Count
+                    ? manual.ScreenshotFileNames[index]
+                    : $"Screenshot {index + 1}";
+            writer.Centered(caption, muted: true);
             writer.Space(8);
         }
         writer.TextSection("Overview", manual.Overview);

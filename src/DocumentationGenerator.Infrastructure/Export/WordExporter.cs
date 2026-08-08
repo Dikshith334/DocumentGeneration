@@ -33,7 +33,10 @@ public sealed class WordExporter : IWordExporter
         {
             if (!File.Exists(screenshots[index])) continue;
             AddImage(mainPart, body, screenshots[index], (uint)(index + 1));
-            var caption = index < manual.ScreenshotFileNames.Count
+            var caption = index < manual.ScreenshotCaptions.Count &&
+                          !string.IsNullOrWhiteSpace(manual.ScreenshotCaptions[index])
+                ? manual.ScreenshotCaptions[index]
+                : index < manual.ScreenshotFileNames.Count
                 ? manual.ScreenshotFileNames[index]
                 : $"Screenshot {index + 1}";
             body.Append(Paragraph(caption, "Subtitle", JustificationValues.Center));

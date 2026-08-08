@@ -83,9 +83,14 @@
             else {
                 @for (var index = 0; index < screen.ScreenshotPaths.Count; index++) {
                     var fileName = index < screen.ScreenshotFileNames.Count ? screen.ScreenshotFileNames[index] : $"Screenshot {index + 1}";
-                    var screenshotAnalysis = screenshotAnalyses.FirstOrDefault(result => result.SourceFileName.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+                    var caption = index < screen.ScreenshotCaptions.Count && !string.IsNullOrWhiteSpace(screen.ScreenshotCaptions[index])
+                        ? screen.ScreenshotCaptions[index]
+                        : System.IO.Path.GetFileNameWithoutExtension(fileName);
+                    var screenshotAnalysis = screenshotAnalyses.FirstOrDefault(result => result.SourceOrder == index)
+                        ?? screenshotAnalyses.FirstOrDefault(result => result.SourceOrder is null && result.SourceFileName.Equals(fileName, StringComparison.OrdinalIgnoreCase));
                     <div class="evidence-block">
-                        <strong>@fileName</strong>
+                        <strong>@caption</strong>
+                        <small class="d-block">@fileName</small>
                         @if (screenshotAnalysis is null) { <p class="empty-copy">Saved without vision analysis.</p> }
                         else {
                             var observations = screenshotAnalysis.AllObservations().ToList();

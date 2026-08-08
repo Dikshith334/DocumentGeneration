@@ -6,6 +6,8 @@ namespace DocumentationGenerator.Application.Services;
 
 public static class UploadValidator
 {
+    public const int MaxScreenshotCaptionLength = 160;
+
     private static readonly HashSet<string> HtmlExtensions = new(StringComparer.OrdinalIgnoreCase) { ".html", ".htm" };
     private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".webp" };
 
@@ -63,6 +65,38 @@ public static class UploadValidator
         foreach (var screenshot in screenshots) Validate(screenshot, UploadKind.Screenshot, options);
     }
 
+    public static List<string> NormalizeScreenshotCaptions(
+        IReadOnlyList<UploadedContent> screenshots,
+        IReadOnlyList<string>? captions)
+    {
+        var normalized = new List<string>(screenshots.Count);
+        for (var index = 0; index < screenshots.Count; index++)
+        {
+            var supplied = captions is not null && index < captions.Count ? captions[index] : string.Empty;
+            var caption = NormalizeWhitespace(supplied);
+            if (caption.Length > MaxScreenshotCaptionLength)
+            {
+                throw new ValidationException(
+                    $"Screenshot caption {index + 1} cannot exceed {MaxScreenshotCaptionLength} characters.");
+            }
+
+            if (string.IsNullOrWhiteSpace(caption))
+            {
+                var fileCaption = Path.GetFileNameWithoutExtension(screenshots[index].FileName)
+                    .Replace('-', ' ')
+                    .Replace('_', ' ');
+                caption = NormalizeWhitespace(fileCaption);
+                if (caption.Length > 0) caption = char.ToUpperInvariant(caption[0]) + caption[1..];
+                if (caption.Length > MaxScreenshotCaptionLength)
+                    caption = caption[..MaxScreenshotCaptionLength].TrimEnd();
+            }
+
+            normalized.Add(string.IsNullOrWhiteSpace(caption) ? $"Screenshot {index + 1}" : caption);
+        }
+
+        return normalized;
+    }
+
     private static void ValidateSignature(UploadedContent file, UploadKind kind)
     {
         var bytes = file.Content;
@@ -92,4 +126,7 @@ public static class UploadValidator
         UploadKind.Screenshot => "Screenshot",
         _ => "Upload"
     };
+
+    private static string NormalizeWhitespace(string? value) => string.Join(" ",
+        (value ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 }
